@@ -2054,7 +2054,8 @@ Streamline Ideas.`
                 for (var i = 0; i < rows.length; i++) {
                     var row = rows[i];
                     var name = row[columnMapping.name] || 'Unknown';
-                    var company = (row[columnMapping.company] || 'Unknown').replace(/^['"]|['"]$/g, '');
+                    var companyRaw = row[columnMapping.company];
+                    var company = (companyRaw && companyRaw.trim() !== '') ? companyRaw.replace(/^['"]|['"]$/g, '') : '{{company name}}';
                     var stage = parseInt(row[columnMapping.stage], 10) || 1;
                     var linkedinUrl = columnMapping.linkedin !== -1 ? row[columnMapping.linkedin] : '';
 
