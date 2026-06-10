@@ -1350,6 +1350,85 @@
             font-family: 'Courier New', monospace;
             font-size: 11px;
         }
+
+        /* ===== BUCKET LABELS (Template step) ===== */
+        .bucket-label {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 14px 18px;
+            background: rgba(124, 92, 255, 0.07);
+            border: 1px solid rgba(124, 92, 255, 0.22);
+            border-radius: var(--radius-md);
+            margin: 24px 0 12px;
+            flex-wrap: wrap;
+        }
+
+        .bucket-label:first-child {
+            margin-top: 4px;
+        }
+
+        .bucket-label-b {
+            background: rgba(251, 191, 36, 0.07);
+            border-color: rgba(251, 191, 36, 0.22);
+            margin-top: 32px;
+        }
+
+        .bucket-icon {
+            font-size: 20px;
+            flex-shrink: 0;
+        }
+
+        .bucket-title {
+            font-size: 15px;
+            font-weight: 800;
+            color: var(--accent-1);
+            letter-spacing: -0.2px;
+        }
+
+        .bucket-label-b .bucket-title {
+            color: var(--warning);
+        }
+
+        .bucket-desc {
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        .bucket-note {
+            font-size: 11px;
+            color: var(--text-muted);
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border-subtle);
+            border-radius: 20px;
+            padding: 2px 10px;
+            margin-left: auto;
+            white-space: nowrap;
+        }
+
+        /* ===== PREMIUM TEMPLATE ITEM ===== */
+        .template-item-premium {
+            background: rgba(251, 191, 36, 0.04);
+            border-color: rgba(251, 191, 36, 0.15);
+        }
+
+        .template-item-premium:hover {
+            border-color: rgba(251, 191, 36, 0.28);
+        }
+
+        .premium-stage {
+            color: var(--warning) !important;
+        }
+
+        .stage-num-premium {
+            background: linear-gradient(135deg, #fbbf24, #f59e0b) !important;
+        }
+
+        /* ===== STAGE BADGE: PREMIUM ===== */
+        .stage-premium {
+            background: rgba(251, 191, 36, 0.14);
+            color: #fbbf24;
+        }
     </style>
 </head>
 
@@ -1440,14 +1519,6 @@ Hi {{user name}}, I came across {{company name}} and was impressed by your work�
                             <div class="vars-pane" id="vars-pane">
                                 <div style="color:var(--text-muted);font-size:13px;padding:12px 0;">Variables detected
                                     in your template will appear here automatically.</div>
-                            </div>
-
-                            <!-- Add custom variable -->
-                            <div class="add-var-row" id="add-var-row">
-                                <input type="text" class="add-var-input" id="add-var-name"
-                                    placeholder="new variable name" aria-label="New variable name">
-                                <button class="btn btn-secondary" id="btn-add-var"
-                                    style="padding:9px 16px;font-size:13px;">+ Add</button>
                             </div>
                         </div>
                     </div>
@@ -1645,11 +1716,66 @@ Shubham
 Streamline Ideas.`
             };
 
+            /* Premium sequence — stages 11-15 in CSV map to positions 1-5 here */
+            var DEFAULT_TEMPLATES_PREMIUM = {
+                1: `Hi {{name}},
+
+Great to connect! I noticed {{company}} is doing some interesting work and wanted to reach out.
+
+At Streamline Ideas, we specialise in helping technology companies accelerate their product delivery and engineering outcomes — particularly when internal teams are stretched or when a key initiative needs to move faster.
+
+I'd love to understand what your team is currently focused on. What's the biggest product or engineering challenge you're trying to solve this quarter?`,
+                2: `Hi {{name}},
+
+Following up on my earlier note — one thing I've observed with teams at {{company}}'s stage is that the challenge is rarely a lack of ideas. It's usually about having the right execution bandwidth to bring those ideas to life on time.
+
+We've helped software companies plug those gaps quickly — whether it's a new product feature, a platform migration, or an AI-powered capability they wanted to launch without disrupting their core team.
+
+Is this something that resonates with what you're navigating right now?`,
+                3: `Hi {{name}},
+
+I wanted to share a quick example of how we've helped teams like yours.
+
+One of our clients, a SaaS company at a similar growth stage to {{company}}, needed to ship a new analytics module within 8 weeks while their core team was tied up with a platform upgrade. We stepped in, aligned quickly with their tech stack, and delivered on time.
+
+If you'd like to see more of what we've built:
+https://www.streamlineideas.com/portfolio
+
+Happy to jump on a quick call to see if there's a fit — no pressure at all.`,
+                4: `Hi {{name}},
+
+I know inboxes get busy, so I'll keep this brief.
+
+If there's ever a point where {{company}} needs reliable engineering support — whether for a specific project, a product sprint, or ongoing development capacity — I'd love to be the first call you make.
+
+Wishing you and the team continued momentum.`,
+                5: `Hi {{name}},
+
+This will be my last follow-up — I don't want to take up more of your time than needed.
+
+If building better software, shipping faster, or finding a trusted technical partner ever becomes a priority for {{company}}, I'd genuinely love to reconnect.
+
+Feel free to reach out anytime. Rooting for you and the team!
+
+Best,
+Shubham
+Streamline Ideas.`
+            };
+
             var STAGE_LABELS = {
                 1: 'Initial Follow-up',
                 2: 'Value Proposition',
                 3: 'Social Proof',
                 4: 'Direct Ask',
+                5: 'Final Touch'
+            };
+
+            var STAGE_LABELS_PREMIUM = {
+                1: 'Warm Intro',
+                2: 'Value Bridge',
+                3: 'Case Study',
+                4: 'Soft Close',
+                5: 'Final Farewell'
             };
 
             /* ============================================================
@@ -1658,11 +1784,13 @@ Streamline Ideas.`
             var csvHeaders = [];
             var csvData = [];
             var templates = {};
+            var templates_premium = {};
             var columnMapping = { name: -1, company: -1, date: -1, stage: -1, linkedin: -1 };
             var allFilteredRows = [];
 
             // Clone defaults
             for (var k in DEFAULT_TEMPLATES) templates[k] = DEFAULT_TEMPLATES[k];
+            for (var k in DEFAULT_TEMPLATES_PREMIUM) templates_premium[k] = DEFAULT_TEMPLATES_PREMIUM[k];
 
             /* ============================================================
                DOM REFERENCES
@@ -1881,6 +2009,13 @@ Streamline Ideas.`
             ============================================================ */
             function renderTemplates() {
                 templatesList.innerHTML = '';
+
+                /* ---- Bucket A: Stages 1-5 ---- */
+                var bucketALabel = document.createElement('div');
+                bucketALabel.className = 'bucket-label';
+                bucketALabel.innerHTML = '<span class="bucket-icon">📋</span> <span class="bucket-title">Sequence A</span> <span class="bucket-desc">for contacts at stages 1 – 5</span>';
+                templatesList.appendChild(bucketALabel);
+
                 for (var stage = 1; stage <= 5; stage++) {
                     var div = document.createElement('div');
                     div.className = 'template-item';
@@ -1897,6 +2032,30 @@ Streamline Ideas.`
                     div.appendChild(ta);
 
                     templatesList.appendChild(div);
+                }
+
+                /* ---- Bucket B: Stages 11-15 ---- */
+                var bucketBLabel = document.createElement('div');
+                bucketBLabel.className = 'bucket-label bucket-label-b';
+                bucketBLabel.innerHTML = '<span class="bucket-icon">🌟</span> <span class="bucket-title">Sequence B</span> <span class="bucket-desc">for contacts at stages 11 – 15</span><span class="bucket-note">Stage 11 = position 1, 12 = position 2 …</span>';
+                templatesList.appendChild(bucketBLabel);
+
+                for (var pos = 1; pos <= 5; pos++) {
+                    var divP = document.createElement('div');
+                    divP.className = 'template-item template-item-premium';
+
+                    var headerP = document.createElement('div');
+                    headerP.className = 'template-header';
+                    headerP.innerHTML = '<span class="template-stage premium-stage"><span class="stage-num stage-num-premium">' + (10 + pos) + '</span> Stage ' + (10 + pos) + ' (position ' + pos + ') — ' + (STAGE_LABELS_PREMIUM[pos] || 'Follow-up') + '</span>';
+                    divP.appendChild(headerP);
+
+                    var taP = document.createElement('textarea');
+                    taP.id = 'template-premium-' + pos;
+                    taP.rows = 5;
+                    taP.value = templates_premium[pos] || '';
+                    divP.appendChild(taP);
+
+                    templatesList.appendChild(divP);
                 }
             }
 
@@ -1987,6 +2146,10 @@ Streamline Ideas.`
                     var ta = document.getElementById('template-' + s);
                     if (ta) templates[s] = ta.value;
                 }
+                for (var p = 1; p <= 5; p++) {
+                    var taP = document.getElementById('template-premium-' + p);
+                    if (taP) templates_premium[p] = taP.value;
+                }
             }
 
             function generateMessages() {
@@ -2016,11 +2179,15 @@ Streamline Ideas.`
                     var sv = parseInt(allFilteredRows[j][columnMapping.stage], 10) || 0;
                     stageSet[sv] = true;
                 }
-                var stageKeys = Object.keys(stageSet).sort();
+                var stageKeys = Object.keys(stageSet).map(Number).sort(function (a, b) { return a - b; });
                 for (var sk = 0; sk < stageKeys.length; sk++) {
+                    var sv2 = stageKeys[sk];
                     var opt = document.createElement('option');
-                    opt.value = stageKeys[sk];
-                    opt.textContent = 'Stage ' + stageKeys[sk] + ' — ' + (STAGE_LABELS[stageKeys[sk]] || 'Follow-up');
+                    opt.value = sv2;
+                    var isPremiumStage = (sv2 >= 11 && sv2 <= 15);
+                    opt.textContent = isPremiumStage
+                        ? '🌟 Stage ' + sv2 + ' — ' + (STAGE_LABELS_PREMIUM[sv2 - 10] || 'Follow-up') + ' (Seq B)'
+                        : 'Stage ' + sv2 + ' — ' + (STAGE_LABELS[sv2] || 'Follow-up');
                     filterStage.appendChild(opt);
                 }
 
@@ -2056,14 +2223,23 @@ Streamline Ideas.`
                     var name = row[columnMapping.name] || 'Unknown';
                     var companyRaw = row[columnMapping.company];
                     var company = (companyRaw && companyRaw.trim() !== '') ? companyRaw.replace(/^['"]|['"]$/g, '') : '{{company name}}';
-                    var stage = parseInt(row[columnMapping.stage], 10) || 1;
+                    var stageRaw = parseInt(row[columnMapping.stage], 10) || 1;
                     var linkedinUrl = columnMapping.linkedin !== -1 ? row[columnMapping.linkedin] : '';
 
-                    var tpl = templates[stage] || templates[1] || '';
+                    // Determine which bucket and which template position to use
+                    var isPremium = (stageRaw >= 11 && stageRaw <= 15);
+                    var stage = stageRaw; // display value
+                    var tpl;
+                    if (isPremium) {
+                        var premiumPos = stageRaw - 10; // 11→1, 12→2, …
+                        tpl = templates_premium[premiumPos] || templates_premium[1] || '';
+                    } else {
+                        tpl = templates[stageRaw] || templates[1] || '';
+                    }
                     var msg = tpl.replace(/\{\{name\}\}/gi, name).replace(/\{\{company\}\}/gi, company);
 
                     var initials = name.split(/\s+/).map(function (w) { return w.charAt(0); }).join('').toUpperCase().slice(0, 2);
-                    var stageClass = (stage >= 1 && stage <= 5) ? 'stage-' + stage : 'stage-1';
+                    var stageClass = isPremium ? 'stage-premium' : ((stage >= 1 && stage <= 5) ? 'stage-' + stage : 'stage-1');
 
                     var card = document.createElement('div');
                     card.className = 'message-card';
@@ -2081,7 +2257,9 @@ Streamline Ideas.`
                         '<div class="client-meta">' +
                         '<span>🏢 ' + esc(company) + '</span>' +
                         '<span style="color:var(--text-muted)">·</span>' +
-                        '<span class="stage-badge ' + stageClass + '">Stage ' + stage + ' — ' + esc(STAGE_LABELS[stage] || 'Follow-up') + '</span>' +
+                        (isPremium
+                            ? '<span class="stage-badge ' + stageClass + '">🌟 Stage ' + stage + ' — ' + esc(STAGE_LABELS_PREMIUM[stage - 10] || 'Follow-up') + '</span>'
+                            : '<span class="stage-badge ' + stageClass + '">Stage ' + stage + ' — ' + esc(STAGE_LABELS[stage] || 'Follow-up') + '</span>') +
                         '</div>' +
                         '</div>' +
                         '</div>';
@@ -2333,6 +2511,7 @@ Streamline Ideas.`
                 allFilteredRows = [];
                 csvInput.value = '';
                 for (var k in DEFAULT_TEMPLATES) templates[k] = DEFAULT_TEMPLATES[k];
+                for (var k in DEFAULT_TEMPLATES_PREMIUM) templates_premium[k] = DEFAULT_TEMPLATES_PREMIUM[k];
                 uploadArea.style.display = '';
                 fileInfoEl.style.display = 'none';
                 mappingCard.style.display = 'none';
@@ -2383,10 +2562,12 @@ Streamline Ideas.`
             }
 
             /* ============================================================
-               MANUAL MODE — VARIABLE DETECTION
+               MANUAL MODE — VARIABLE DETECTION & REPLACE
+               Simple, reliable approach:
+               - Scan template on each keystroke → rebuild right-pane inputs
+               - Values entered in those inputs are persisted by key across re-renders
+               - "Replace Variables" reads the current inputs and does a plain substitution
             ============================================================ */
-            var manualVars = {}; // { varName: value }
-
             var manualTa = document.getElementById('manual-template-ta');
             var varsPane = document.getElementById('vars-pane');
 
@@ -2403,28 +2584,34 @@ What's been the most challenging part so far : product development, hiring, or k
 
 Looking forward to learning more about your journey.`;
 
-            // Scan for {{var}} placeholders in the template
+            /** Extract unique variable names (in order of first appearance) from template text. */
             function extractVars(text) {
                 var regex = /\{\{([^}]+)\}\}/g;
-                var found = {};
+                var seen = {};
+                var ordered = [];
                 var match;
                 while ((match = regex.exec(text)) !== null) {
                     var key = match[1].trim();
-                    if (key) found[key] = true;
+                    if (key && !seen[key]) {
+                        seen[key] = true;
+                        ordered.push(key);
+                    }
                 }
-                return Object.keys(found);
+                return ordered;
             }
 
-            // Render the right-pane variable rows
-            function renderVarRows(keys) {
-                // Preserve existing values
-                var currentValues = {};
-                var inputs = varsPane.querySelectorAll('[data-var-key]');
-                for (var i = 0; i < inputs.length; i++) {
-                    currentValues[inputs[i].getAttribute('data-var-key')] = inputs[i].value;
-                }
-                // Merge manualVars with currentValues
-                for (var v in currentValues) { manualVars[v] = currentValues[v]; }
+            /**
+             * Re-render the right pane based on currently-detected variables.
+             * Existing input values are preserved across re-renders.
+             */
+            function syncVarRows() {
+                var keys = extractVars(manualTa.value);
+
+                // Snapshot current values before wiping
+                var saved = {};
+                varsPane.querySelectorAll('[data-var-key]').forEach(function (inp) {
+                    saved[inp.getAttribute('data-var-key')] = inp.value;
+                });
 
                 varsPane.innerHTML = '';
 
@@ -2436,95 +2623,38 @@ Looking forward to learning more about your journey.`;
                     return;
                 }
 
-                for (var k = 0; k < keys.length; k++) {
-                    addVarRow(keys[k], manualVars[keys[k]] || '');
-                }
-            }
+                keys.forEach(function (key) {
+                    var row = document.createElement('div');
+                    row.className = 'var-row';
 
-            function addVarRow(key, value) {
-                var row = document.createElement('div');
-                row.className = 'var-row';
-                row.setAttribute('data-var-row', key);
+                    var badge = document.createElement('span');
+                    badge.className = 'var-key';
+                    badge.textContent = '{{' + key + '}}';
+                    badge.title = key;
 
-                var badge = document.createElement('span');
-                badge.className = 'var-key';
-                badge.textContent = '{{' + key + '}}';
-                badge.title = key;
+                    var input = document.createElement('input');
+                    input.type = 'text';
+                    input.className = 'var-input';
+                    input.placeholder = 'Enter value…';
+                    input.value = saved[key] || '';
+                    input.setAttribute('data-var-key', key);
+                    input.setAttribute('aria-label', 'Value for ' + key);
 
-                var input = document.createElement('input');
-                input.type = 'text';
-                input.className = 'var-input';
-                input.placeholder = 'Enter value...';
-                input.value = value || '';
-                input.setAttribute('data-var-key', key);
-                input.setAttribute('aria-label', 'Value for ' + key);
-
-                var rmBtn = document.createElement('button');
-                rmBtn.className = 'btn-remove-var';
-                rmBtn.title = 'Remove variable';
-                rmBtn.textContent = '✕';
-                rmBtn.setAttribute('data-rm-var', key);
-                rmBtn.addEventListener('click', function () {
-                    var k2 = this.getAttribute('data-rm-var');
-                    // Remove from template
-                    var rx = new RegExp('\\{\\{\\s*' + escapeRegex(k2) + '\\s*\\}\\}', 'g');
-                    manualTa.value = manualTa.value.replace(rx, '');
-                    delete manualVars[k2];
-                    syncVarRows();
+                    row.appendChild(badge);
+                    row.appendChild(input);
+                    varsPane.appendChild(row);
                 });
-
-                row.appendChild(badge);
-                row.appendChild(input);
-                row.appendChild(rmBtn);
-                varsPane.appendChild(row);
             }
 
-            function escapeRegex(str) {
-                return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-            }
-
-            function syncVarRows() {
-                var keys = extractVars(manualTa.value);
-                // Also include any manually added vars not in template
-                for (var mv in manualVars) {
-                    if (keys.indexOf(mv) === -1) keys.push(mv);
-                }
-                renderVarRows(keys);
-            }
-
-            // Re-scan on template change (debounced)
+            // Re-scan on template change (debounced 250 ms)
             var scanTimer = null;
             manualTa.addEventListener('input', function () {
                 clearTimeout(scanTimer);
-                scanTimer = setTimeout(syncVarRows, 350);
+                scanTimer = setTimeout(syncVarRows, 250);
             });
 
             // Initial scan
             syncVarRows();
-
-            /* Add Variable button */
-            document.getElementById('btn-add-var').addEventListener('click', function () {
-                var nameInput = document.getElementById('add-var-name');
-                var rawName = nameInput.value.trim();
-                if (!rawName) { showToast('Enter a variable name first.', 'error'); return; }
-                // Insert placeholder into template at end
-                var existing = extractVars(manualTa.value);
-                if (existing.indexOf(rawName) === -1) {
-                    // Append to template
-                    manualTa.value += ' {{' + rawName + '}}';
-                }
-                manualVars[rawName] = manualVars[rawName] || '';
-                nameInput.value = '';
-                syncVarRows();
-                // Focus the new input
-                var newInput = varsPane.querySelector('[data-var-key="' + rawName + '"]');
-                if (newInput) newInput.focus();
-            });
-
-            // Allow Enter to add variable
-            document.getElementById('add-var-name').addEventListener('keydown', function (e) {
-                if (e.key === 'Enter') document.getElementById('btn-add-var').click();
-            });
 
             /* ============================================================
                MANUAL MODE — REPLACE
@@ -2576,7 +2706,6 @@ Looking forward to learning more about your journey.`;
             /* Clear all */
             document.getElementById('btn-manual-reset').addEventListener('click', function () {
                 manualTa.value = '';
-                manualVars = {};
                 document.getElementById('manual-result').style.display = 'none';
                 syncVarRows();
             });
