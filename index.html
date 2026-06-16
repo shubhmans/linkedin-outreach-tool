@@ -2177,13 +2177,17 @@ Streamline Ideas.`
                     return false;
                 }
 
-                // Filter for today
+                // Filter for today, excluding unsupported stages (10 and 20)
+                var EXCLUDED_STAGES = [10, 20];
                 allFilteredRows = [];
                 for (var i = 0; i < csvData.length; i++) {
                     var dateStr = csvData[i][columnMapping.date];
                     var parsed = parseDate(dateStr);
                     if (isToday(parsed)) {
-                        allFilteredRows.push(csvData[i]);
+                        var rowStage = parseInt(csvData[i][columnMapping.stage], 10) || 0;
+                        if (EXCLUDED_STAGES.indexOf(rowStage) === -1) {
+                            allFilteredRows.push(csvData[i]);
+                        }
                     }
                 }
 
@@ -2247,10 +2251,14 @@ Streamline Ideas.`
                     var tpl;
                     if (isPremium) {
                         var premiumPos = stageRaw - 10; // 11→1, 12→2, …
-                        tpl = templates_premium[premiumPos] || templates_premium[1] || '';
+                        tpl = templates_premium[premiumPos] || '';
                     } else {
-                        tpl = templates[stageRaw] || templates[1] || '';
+                        // Only use template for defined stages (1-5); skip others
+                        tpl = (stageRaw >= 1 && stageRaw <= 5) ? (templates[stageRaw] || '') : '';
                     }
+
+                    // Skip this row if no template is defined for its stage
+                    if (!tpl) continue;
                     var msg = tpl.replace(/\{\{name\}\}/gi, name).replace(/\{\{company\}\}/gi, company);
 
                     var initials = name.split(/\s+/).map(function (w) { return w.charAt(0); }).join('').toUpperCase().slice(0, 2);
